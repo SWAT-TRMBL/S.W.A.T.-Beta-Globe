@@ -233,8 +233,8 @@
     }
 
     function resolveOverlaps(pins) {
-      const minDistance = 0.1; // Minimum distance between pins
-      const maxIterations = 10; // Limit iterations to prevent infinite loops
+      const minDistance = 0.2; // Minimum distance between pins
+      const maxIterations = 20; // Limit iterations to prevent infinite loops
 
       for (let iteration = 0; iteration < maxIterations; iteration++) {
         let hasOverlap = false;
