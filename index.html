@@ -233,8 +233,9 @@
     }
 
     function resolveOverlaps(pins) {
-      const minDistance = 0.1; // Minimum distance between pins
-      const maxIterations = 20; // Limit iterations to prevent infinite loops
+      const minDistance = 0.1;
+      const maxIterations = 20;
+      const globeRadius = 1.045;
 
       for (let iteration = 0; iteration < maxIterations; iteration++) {
         let hasOverlap = false;
@@ -248,18 +249,39 @@
             if (distance < minDistance) {
               hasOverlap = true;
 
-              // Calculate a repelling vector
-              const direction = pinA.position.clone().sub(pinB.position).normalize();
+              let direction = pinA.position.clone().sub(pinB.position);
+
+              // If pins are at the exact same position, create a random tangent direction
+              if (direction.length() === 0) {
+                // Get a normal (the position vector)
+                const normal = pinA.position.clone().normalize();
+                // Create a random vector
+                let randomVec = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+                // Project randomVec onto the tangent plane
+                direction = randomVec.sub(normal.clone().multiplyScalar(randomVec.dot(normal))).normalize();
+              } else {
+                direction.normalize();
+              }
+
               const overlap = minDistance - distance;
 
-              // Push pins apart
-              pinA.position.add(direction.clone().multiplyScalar(overlap / 2));
-              pinB.position.add(direction.clone().multiplyScalar(-overlap / 2));
+              // Move pins tangentially
+              let normalA = pinA.position.clone().normalize();
+              let tangentA = direction.clone().sub(normalA.multiplyScalar(direction.dot(normalA))).normalize();
+
+              let normalB = pinB.position.clone().normalize();
+              let tangentB = direction.clone().negate().sub(normalB.multiplyScalar(direction.clone().negate().dot(normalB))).normalize();
+
+              pinA.position.add(tangentA.multiplyScalar(overlap / 2));
+              pinB.position.add(tangentB.multiplyScalar(overlap / 2));
+
+              pinA.position.setLength(globeRadius);
+              pinB.position.setLength(globeRadius);
             }
           }
         }
 
-        if (!hasOverlap) break; // Stop if no overlaps are detected
+        if (!hasOverlap) break;
       }
     }
 
