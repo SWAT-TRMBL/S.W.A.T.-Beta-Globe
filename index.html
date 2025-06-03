@@ -95,7 +95,7 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     const geometry = new THREE.SphereGeometry(1, 32, 32);
-    const texture = new THREE.TextureLoader().load('8081_earthmap10k.jpg');
+    const texture = new THREE.TextureLoader().load('IconImages/8081_earthmap10k.jpg');
     const material = new THREE.MeshBasicMaterial({ map: texture });
     const globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
