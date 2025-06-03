@@ -95,7 +95,7 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     const geometry = new THREE.SphereGeometry(1, 32, 32);
-    const texture = new THREE.TextureLoader().load('IconImages/8081_earthmap10k.jpg');
+    const texture = new THREE.TextureLoader().load('Images/8081_earthmap10k.jpg');
     const material = new THREE.MeshBasicMaterial({ map: texture });
     const globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
@@ -135,49 +135,70 @@
       return new THREE.Vector3(x, y, z);
     }
 
+    // 1. Define category groups
+    const whiteCategories = ['Earthworks', 'EW GO!'];
+    const blueCategories = ['Siteworks MG', 'Siteworks', 'Office Software'];
+    const yellowCategories = ['Groundworks', 'Marine', 'Roadworks'];
+
+    // 2. Load icon materials for each color and machine type
+    const iconMaterials = {
+      white: {
+        hex: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/White Hex.png') }),
+        dozer: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Bulldozer_white.png') }),
+        grader: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/White Grader.png') }),
+        compactor: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Roller_white.png') }),
+        ctl: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Bulldozer_white.png') }),
+        pd: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/PD White.png') }),
+        ts: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/White TS.png') }),
+      },
+      blue: {
+        hex: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Blue Hex.png') }),
+        dozer: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Blue Dozer.png') }),
+        grader: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Blue Grader.png') }),
+        compactor: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Blue Roller.png') }),
+        ctl: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Blue Dozer.png') }),
+        pd: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Yellow PD.png') }),
+        ts: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Blue TS.png') }),
+      },
+      yellow: {
+        hex: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Yellow Hex.png') }),
+        dozer: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Yellow Dozer.png') }),
+        grader: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Yellow Grader.png') }),
+        compactor: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Yellow Roller.png') }),
+        ctl: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Yellow Dozer.png') }),
+        pd: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Yellow PD.png') }),
+        ts: new THREE.SpriteMaterial({ map: new THREE.TextureLoader().load('Images/Yellow TS.png') }),
+      }
+    };
+
+    // 3. Helper to get color group by category
+    function getColorByCategory(category) {
+      if (whiteCategories.includes(category)) return 'white';
+      if (blueCategories.includes(category)) return 'blue';
+      if (yellowCategories.includes(category)) return 'yellow';
+      return 'white'; // default
+    }
+
+    // 4. Helper to get material by machine type and category
+    function getPinMaterial(machineType, category) {
+      const color = getColorByCategory(category);
+      switch (machineType) {
+        case 'hex': return iconMaterials[color].hex;
+        case 'dozer':
+        case 'wheel loader': return iconMaterials[color].dozer;
+        case 'grader': return iconMaterials[color].grader;
+        case 'compact machine': return iconMaterials[color].ctl;
+        case 'soil/landfill compactor':
+        case 'asphalt compactor': return iconMaterials[color].compactor;
+        case 'drilling/piling':
+        case 'paver': return iconMaterials[color].pd;
+        default: return iconMaterials[color].hex;
+      }
+    }
+
+    // 5. Update addPinsToGlobe to use the new logic
     function addPinsToGlobe(locations) {
-      // Create materials for each machine type (replace with your actual image URLs)
-      const excavatorMaterial = new THREE.SpriteMaterial({
-        map: new THREE.TextureLoader().load('ico-industries-construction_white.png', undefined, undefined, (err) => {
-            console.error('Error loading excavator image:', err);
-        })
-      });
-      const dozerMaterial = new THREE.SpriteMaterial({
-        map: new THREE.TextureLoader().load('Bulldozer_white.png', undefined, undefined, (err) => {
-            console.error('Error loading dozer image:', err);
-        })
-      });
-      const compactorMaterial = new THREE.SpriteMaterial({
-        map: new THREE.TextureLoader().load('Roller_white.png', undefined, undefined, (err) => {
-            console.error('Error loading compactor image:', err);
-        })
-      });
-      const ctlMaterial = new THREE.SpriteMaterial({
-        map: new THREE.TextureLoader().load('Bulldozer_white.png', undefined, undefined, (err) => {
-            console.error('Error loading ctl image:', err);
-        })
-      });
-      const graderMaterial = new THREE.SpriteMaterial({
-        map: new THREE.TextureLoader().load('White Grader.png', undefined, undefined, (err) => {
-            console.error('Error loading grader image:', err);
-        })
-      });
-      const tsMaterial = new THREE.SpriteMaterial({
-        map: new THREE.TextureLoader().load('icon-monitoring_white.png', undefined, undefined, (err) => {
-            console.error('Error loading ts image:', err);
-        })
-      });
-      const pdMaterial = new THREE.SpriteMaterial({
-        map: new THREE.TextureLoader().load('PD White.png', undefined, undefined, (err) => {
-            console.error('Error loading pd image:', err);
-        })
-      });
-
       locations.forEach(location => {
-        console.log('All keys:', Object.keys(location));
-        console.log('Latitude raw:', location["Latitude"], 'Longitude raw:', location["Longitude"]);
-        console.log('All keys:', Object.keys(location));
-
         const lat = parseFloat(location["Latitude"] ? location["Latitude"].trim() : '');
         const lng = parseFloat(location["Longitude"] ? location["Longitude"].trim() : '');
         if (isNaN(lat) || isNaN(lng)) {
@@ -186,22 +207,9 @@
         }
 
         const machineType = location["Machine Type"] ? location["Machine Type"].toLowerCase().trim() : '';
+        const category = location["Category"] ? location["Category"].trim() : '';
 
-        let pinMaterial;
-        switch (machineType) {
-          case 'hex': pinMaterial = excavatorMaterial; break;
-          case 'dozer': pinMaterial = dozerMaterial; break;
-          case 'wheel loader': pinMaterial = dozerMaterial; break;
-          case 'grader': pinMaterial = graderMaterial; break;
-          case 'compact machine': pinMaterial = ctlMaterial; break;
-          case 'soil/landfill compactor': pinMaterial = compactorMaterial; break;
-          case 'drilling/piling': pinMaterial = pdMaterial; break;
-          case 'paver': pinMaterial = pdMaterial; break;
-          case 'asphalt compactor': pinMaterial = compactorMaterial; break;
-          default:
-            console.warn(`Unknown machine type: ${location["Machine Type"]}. Using default.`);
-            pinMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        }
+        const pinMaterial = getPinMaterial(machineType, category);
 
         const pin = new THREE.Sprite(pinMaterial);
 
@@ -233,7 +241,7 @@
     }
 
     function resolveOverlaps(pins) {
-      const minDistance = 0.1;
+      const minDistance = 0.075; // Minimum distance between pins
       const maxIterations = 20;
       const globeRadius = 1.045;
 
